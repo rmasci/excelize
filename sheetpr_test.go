@@ -13,7 +13,10 @@ var _ = []SheetPrOption{
 	EnableFormatConditionsCalculation(false),
 	Published(false),
 	FitToPage(true),
-	TabColor("#FFFF00"),
+	TabColorIndexed(42),
+	TabColorRGB("#FFFF00"),
+	TabColorTheme(ColorMappingTypeLight2),
+	TabColorTint(0.5),
 	AutoPageBreaks(true),
 	OutlineSummaryBelow(true),
 }
@@ -23,7 +26,10 @@ var _ = []SheetPrOptionPtr{
 	(*EnableFormatConditionsCalculation)(nil),
 	(*Published)(nil),
 	(*FitToPage)(nil),
-	(*TabColor)(nil),
+	(*TabColorIndexed)(nil),
+	(*TabColorRGB)(nil),
+	(*TabColorTheme)(nil),
+	(*TabColorTint)(nil),
 	(*AutoPageBreaks)(nil),
 	(*OutlineSummaryBelow)(nil),
 }
@@ -37,7 +43,10 @@ func ExampleFile_SetSheetPrOptions() {
 		EnableFormatConditionsCalculation(false),
 		Published(false),
 		FitToPage(true),
-		TabColor("#FFFF00"),
+		TabColorIndexed(42),
+		TabColorRGB("#FFFF00"),
+		TabColorTheme(ColorMappingTypeLight2),
+		TabColorTint(0.5),
 		AutoPageBreaks(true),
 		OutlineSummaryBelow(false),
 	); err != nil {
@@ -55,7 +64,10 @@ func ExampleFile_GetSheetPrOptions() {
 		enableFormatConditionsCalculation EnableFormatConditionsCalculation
 		published                         Published
 		fitToPage                         FitToPage
-		tabColor                          TabColor
+		tabColorIndexed                   TabColorIndexed
+		tabColorRGB                       TabColorRGB
+		tabColorTheme                     TabColorTheme
+		tabColorTint                      TabColorTint
 		autoPageBreaks                    AutoPageBreaks
 		outlineSummaryBelow               OutlineSummaryBelow
 	)
@@ -65,7 +77,10 @@ func ExampleFile_GetSheetPrOptions() {
 		&enableFormatConditionsCalculation,
 		&published,
 		&fitToPage,
-		&tabColor,
+		&tabColorIndexed,
+		&tabColorRGB,
+		&tabColorTheme,
+		&tabColorTint,
 		&autoPageBreaks,
 		&outlineSummaryBelow,
 	); err != nil {
@@ -76,7 +91,10 @@ func ExampleFile_GetSheetPrOptions() {
 	fmt.Println("- enableFormatConditionsCalculation:", enableFormatConditionsCalculation)
 	fmt.Println("- published:", published)
 	fmt.Println("- fitToPage:", fitToPage)
-	fmt.Printf("- tabColor: %q\n", tabColor)
+	fmt.Printf("- tabColorIndexed: %d\n", tabColorIndexed)
+	fmt.Printf("- tabColorRGB: %q\n", tabColorRGB)
+	fmt.Printf("- tabColorTheme: %d\n", tabColorTheme)
+	fmt.Printf("- tabColorTint: %f\n", tabColorTint)
 	fmt.Println("- autoPageBreaks:", autoPageBreaks)
 	fmt.Println("- outlineSummaryBelow:", outlineSummaryBelow)
 	// Output:
@@ -85,7 +103,10 @@ func ExampleFile_GetSheetPrOptions() {
 	// - enableFormatConditionsCalculation: true
 	// - published: true
 	// - fitToPage: false
-	// - tabColor: ""
+	// - tabColorIndexed: -1
+	// - tabColorRGB: ""
+	// - tabColorTheme: -1
+	// - tabColorTint: 0.000000
 	// - autoPageBreaks: false
 	// - outlineSummaryBelow: true
 }
@@ -101,16 +122,18 @@ func TestSheetPrOptions(t *testing.T) {
 		{new(EnableFormatConditionsCalculation), EnableFormatConditionsCalculation(false)},
 		{new(Published), Published(false)},
 		{new(FitToPage), FitToPage(true)},
-		{new(TabColor), TabColor("FFFF00")},
+		{new(TabColorIndexed), TabColorIndexed(42)},
+		{new(TabColorRGB), TabColorRGB("FFFF00")},
+		{new(TabColorTheme), TabColorTheme(ColorMappingTypeLight2)},
+		{new(TabColorTint), TabColorTint(0.5)},
 		{new(AutoPageBreaks), AutoPageBreaks(true)},
 		{new(OutlineSummaryBelow), OutlineSummaryBelow(false)},
 	}
 
 	for i, test := range testData {
 		t.Run(fmt.Sprintf("TestData%d", i), func(t *testing.T) {
-
-			opt := test.nonDefault
-			t.Logf("option %T", opt)
+			opts := test.nonDefault
+			t.Logf("option %T", opts)
 
 			def := deepcopy.Copy(test.container).(SheetPrOptionPtr)
 			val1 := deepcopy.Copy(def).(SheetPrOptionPtr)
@@ -118,34 +141,34 @@ func TestSheetPrOptions(t *testing.T) {
 
 			f := NewFile()
 			// Get the default value
-			assert.NoError(t, f.GetSheetPrOptions(sheet, def), opt)
+			assert.NoError(t, f.GetSheetPrOptions(sheet, def), opts)
 			// Get again and check
-			assert.NoError(t, f.GetSheetPrOptions(sheet, val1), opt)
-			if !assert.Equal(t, val1, def, opt) {
+			assert.NoError(t, f.GetSheetPrOptions(sheet, val1), opts)
+			if !assert.Equal(t, val1, def, opts) {
 				t.FailNow()
 			}
 			// Set the same value
-			assert.NoError(t, f.SetSheetPrOptions(sheet, val1), opt)
+			assert.NoError(t, f.SetSheetPrOptions(sheet, val1), opts)
 			// Get again and check
-			assert.NoError(t, f.GetSheetPrOptions(sheet, val1), opt)
-			if !assert.Equal(t, val1, def, "%T: value should not have changed", opt) {
+			assert.NoError(t, f.GetSheetPrOptions(sheet, val1), opts)
+			if !assert.Equal(t, val1, def, "%T: value should not have changed", opts) {
 				t.FailNow()
 			}
 			// Set a different value
-			assert.NoError(t, f.SetSheetPrOptions(sheet, test.nonDefault), opt)
-			assert.NoError(t, f.GetSheetPrOptions(sheet, val1), opt)
+			assert.NoError(t, f.SetSheetPrOptions(sheet, test.nonDefault), opts)
+			assert.NoError(t, f.GetSheetPrOptions(sheet, val1), opts)
 			// Get again and compare
-			assert.NoError(t, f.GetSheetPrOptions(sheet, val2), opt)
-			if !assert.Equal(t, val1, val2, "%T: value should not have changed", opt) {
+			assert.NoError(t, f.GetSheetPrOptions(sheet, val2), opts)
+			if !assert.Equal(t, val1, val2, "%T: value should not have changed", opts) {
 				t.FailNow()
 			}
 			// Value should not be the same as the default
-			if !assert.NotEqual(t, def, val1, "%T: value should have changed from default", opt) {
+			if !assert.NotEqual(t, def, val1, "%T: value should have changed from default", opts) {
 				t.FailNow()
 			}
 			// Restore the default value
-			assert.NoError(t, f.SetSheetPrOptions(sheet, def), opt)
-			assert.NoError(t, f.GetSheetPrOptions(sheet, val1), opt)
+			assert.NoError(t, f.SetSheetPrOptions(sheet, def), opts)
+			assert.NoError(t, f.GetSheetPrOptions(sheet, val1), opts)
 			if !assert.Equal(t, def, val1) {
 				t.FailNow()
 			}
@@ -153,17 +176,17 @@ func TestSheetPrOptions(t *testing.T) {
 	}
 }
 
-func TestSetSheetrOptions(t *testing.T) {
+func TestSetSheetPrOptions(t *testing.T) {
 	f := NewFile()
-	assert.NoError(t, f.SetSheetPrOptions("Sheet1", TabColor("")))
-	// Test SetSheetrOptions on not exists worksheet.
-	assert.EqualError(t, f.SetSheetPrOptions("SheetN"), "sheet SheetN is not exist")
+	assert.NoError(t, f.SetSheetPrOptions("Sheet1", TabColorRGB("")))
+	// Test SetSheetPrOptions on not exists worksheet.
+	assert.EqualError(t, f.SetSheetPrOptions("SheetN"), "sheet SheetN does not exist")
 }
 
 func TestGetSheetPrOptions(t *testing.T) {
 	f := NewFile()
 	// Test GetSheetPrOptions on not exists worksheet.
-	assert.EqualError(t, f.GetSheetPrOptions("SheetN"), "sheet SheetN is not exist")
+	assert.EqualError(t, f.GetSheetPrOptions("SheetN"), "sheet SheetN does not exist")
 }
 
 var _ = []PageMarginsOptions{
@@ -258,9 +281,8 @@ func TestPageMarginsOption(t *testing.T) {
 
 	for i, test := range testData {
 		t.Run(fmt.Sprintf("TestData%d", i), func(t *testing.T) {
-
-			opt := test.nonDefault
-			t.Logf("option %T", opt)
+			opts := test.nonDefault
+			t.Logf("option %T", opts)
 
 			def := deepcopy.Copy(test.container).(PageMarginsOptionsPtr)
 			val1 := deepcopy.Copy(def).(PageMarginsOptionsPtr)
@@ -268,34 +290,34 @@ func TestPageMarginsOption(t *testing.T) {
 
 			f := NewFile()
 			// Get the default value
-			assert.NoError(t, f.GetPageMargins(sheet, def), opt)
+			assert.NoError(t, f.GetPageMargins(sheet, def), opts)
 			// Get again and check
-			assert.NoError(t, f.GetPageMargins(sheet, val1), opt)
-			if !assert.Equal(t, val1, def, opt) {
+			assert.NoError(t, f.GetPageMargins(sheet, val1), opts)
+			if !assert.Equal(t, val1, def, opts) {
 				t.FailNow()
 			}
 			// Set the same value
-			assert.NoError(t, f.SetPageMargins(sheet, val1), opt)
+			assert.NoError(t, f.SetPageMargins(sheet, val1), opts)
 			// Get again and check
-			assert.NoError(t, f.GetPageMargins(sheet, val1), opt)
-			if !assert.Equal(t, val1, def, "%T: value should not have changed", opt) {
+			assert.NoError(t, f.GetPageMargins(sheet, val1), opts)
+			if !assert.Equal(t, val1, def, "%T: value should not have changed", opts) {
 				t.FailNow()
 			}
 			// Set a different value
-			assert.NoError(t, f.SetPageMargins(sheet, test.nonDefault), opt)
-			assert.NoError(t, f.GetPageMargins(sheet, val1), opt)
+			assert.NoError(t, f.SetPageMargins(sheet, test.nonDefault), opts)
+			assert.NoError(t, f.GetPageMargins(sheet, val1), opts)
 			// Get again and compare
-			assert.NoError(t, f.GetPageMargins(sheet, val2), opt)
-			if !assert.Equal(t, val1, val2, "%T: value should not have changed", opt) {
+			assert.NoError(t, f.GetPageMargins(sheet, val2), opts)
+			if !assert.Equal(t, val1, val2, "%T: value should not have changed", opts) {
 				t.FailNow()
 			}
 			// Value should not be the same as the default
-			if !assert.NotEqual(t, def, val1, "%T: value should have changed from default", opt) {
+			if !assert.NotEqual(t, def, val1, "%T: value should have changed from default", opts) {
 				t.FailNow()
 			}
 			// Restore the default value
-			assert.NoError(t, f.SetPageMargins(sheet, def), opt)
-			assert.NoError(t, f.GetPageMargins(sheet, val1), opt)
+			assert.NoError(t, f.SetPageMargins(sheet, def), opts)
+			assert.NoError(t, f.GetPageMargins(sheet, val1), opts)
 			if !assert.Equal(t, def, val1) {
 				t.FailNow()
 			}
@@ -306,13 +328,13 @@ func TestPageMarginsOption(t *testing.T) {
 func TestSetPageMargins(t *testing.T) {
 	f := NewFile()
 	// Test set page margins on not exists worksheet.
-	assert.EqualError(t, f.SetPageMargins("SheetN"), "sheet SheetN is not exist")
+	assert.EqualError(t, f.SetPageMargins("SheetN"), "sheet SheetN does not exist")
 }
 
 func TestGetPageMargins(t *testing.T) {
 	f := NewFile()
 	// Test get page margins on not exists worksheet.
-	assert.EqualError(t, f.GetPageMargins("SheetN"), "sheet SheetN is not exist")
+	assert.EqualError(t, f.GetPageMargins("SheetN"), "sheet SheetN does not exist")
 }
 
 func ExampleFile_SetSheetFormatPr() {
@@ -395,9 +417,8 @@ func TestSheetFormatPrOptions(t *testing.T) {
 
 	for i, test := range testData {
 		t.Run(fmt.Sprintf("TestData%d", i), func(t *testing.T) {
-
-			opt := test.nonDefault
-			t.Logf("option %T", opt)
+			opts := test.nonDefault
+			t.Logf("option %T", opts)
 
 			def := deepcopy.Copy(test.container).(SheetFormatPrOptionsPtr)
 			val1 := deepcopy.Copy(def).(SheetFormatPrOptionsPtr)
@@ -405,34 +426,34 @@ func TestSheetFormatPrOptions(t *testing.T) {
 
 			f := NewFile()
 			// Get the default value
-			assert.NoError(t, f.GetSheetFormatPr(sheet, def), opt)
+			assert.NoError(t, f.GetSheetFormatPr(sheet, def), opts)
 			// Get again and check
-			assert.NoError(t, f.GetSheetFormatPr(sheet, val1), opt)
-			if !assert.Equal(t, val1, def, opt) {
+			assert.NoError(t, f.GetSheetFormatPr(sheet, val1), opts)
+			if !assert.Equal(t, val1, def, opts) {
 				t.FailNow()
 			}
 			// Set the same value
-			assert.NoError(t, f.SetSheetFormatPr(sheet, val1), opt)
+			assert.NoError(t, f.SetSheetFormatPr(sheet, val1), opts)
 			// Get again and check
-			assert.NoError(t, f.GetSheetFormatPr(sheet, val1), opt)
-			if !assert.Equal(t, val1, def, "%T: value should not have changed", opt) {
+			assert.NoError(t, f.GetSheetFormatPr(sheet, val1), opts)
+			if !assert.Equal(t, val1, def, "%T: value should not have changed", opts) {
 				t.FailNow()
 			}
 			// Set a different value
-			assert.NoError(t, f.SetSheetFormatPr(sheet, test.nonDefault), opt)
-			assert.NoError(t, f.GetSheetFormatPr(sheet, val1), opt)
+			assert.NoError(t, f.SetSheetFormatPr(sheet, test.nonDefault), opts)
+			assert.NoError(t, f.GetSheetFormatPr(sheet, val1), opts)
 			// Get again and compare
-			assert.NoError(t, f.GetSheetFormatPr(sheet, val2), opt)
-			if !assert.Equal(t, val1, val2, "%T: value should not have changed", opt) {
+			assert.NoError(t, f.GetSheetFormatPr(sheet, val2), opts)
+			if !assert.Equal(t, val1, val2, "%T: value should not have changed", opts) {
 				t.FailNow()
 			}
 			// Value should not be the same as the default
-			if !assert.NotEqual(t, def, val1, "%T: value should have changed from default", opt) {
+			if !assert.NotEqual(t, def, val1, "%T: value should have changed from default", opts) {
 				t.FailNow()
 			}
 			// Restore the default value
-			assert.NoError(t, f.SetSheetFormatPr(sheet, def), opt)
-			assert.NoError(t, f.GetSheetFormatPr(sheet, val1), opt)
+			assert.NoError(t, f.SetSheetFormatPr(sheet, def), opts)
+			assert.NoError(t, f.GetSheetFormatPr(sheet, val1), opts)
 			if !assert.Equal(t, def, val1) {
 				t.FailNow()
 			}
@@ -443,16 +464,20 @@ func TestSheetFormatPrOptions(t *testing.T) {
 func TestSetSheetFormatPr(t *testing.T) {
 	f := NewFile()
 	assert.NoError(t, f.GetSheetFormatPr("Sheet1"))
-	f.Sheet["xl/worksheets/sheet1.xml"].SheetFormatPr = nil
+	ws, ok := f.Sheet.Load("xl/worksheets/sheet1.xml")
+	assert.True(t, ok)
+	ws.(*xlsxWorksheet).SheetFormatPr = nil
 	assert.NoError(t, f.SetSheetFormatPr("Sheet1", BaseColWidth(1.0)))
 	// Test set formatting properties on not exists worksheet.
-	assert.EqualError(t, f.SetSheetFormatPr("SheetN"), "sheet SheetN is not exist")
+	assert.EqualError(t, f.SetSheetFormatPr("SheetN"), "sheet SheetN does not exist")
 }
 
 func TestGetSheetFormatPr(t *testing.T) {
 	f := NewFile()
 	assert.NoError(t, f.GetSheetFormatPr("Sheet1"))
-	f.Sheet["xl/worksheets/sheet1.xml"].SheetFormatPr = nil
+	ws, ok := f.Sheet.Load("xl/worksheets/sheet1.xml")
+	assert.True(t, ok)
+	ws.(*xlsxWorksheet).SheetFormatPr = nil
 	var (
 		baseColWidth     BaseColWidth
 		defaultColWidth  DefaultColWidth
@@ -472,5 +497,5 @@ func TestGetSheetFormatPr(t *testing.T) {
 		&thickBottom,
 	))
 	// Test get formatting properties on not exists worksheet.
-	assert.EqualError(t, f.GetSheetFormatPr("SheetN"), "sheet SheetN is not exist")
+	assert.EqualError(t, f.GetSheetFormatPr("SheetN"), "sheet SheetN does not exist")
 }

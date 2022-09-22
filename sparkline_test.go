@@ -218,42 +218,44 @@ func TestAddSparkline(t *testing.T) {
 	assert.EqualError(t, f.AddSparkline("SheetN", &SparklineOption{
 		Location: []string{"F3"},
 		Range:    []string{"Sheet2!A3:E3"},
-	}), "sheet SheetN is not exist")
+	}), "sheet SheetN does not exist")
 
-	assert.EqualError(t, f.AddSparkline("Sheet1", nil), "parameter is required")
+	assert.EqualError(t, f.AddSparkline("Sheet1", nil), ErrParameterRequired.Error())
 
 	assert.EqualError(t, f.AddSparkline("Sheet1", &SparklineOption{
 		Range: []string{"Sheet2!A3:E3"},
-	}), `parameter 'Location' is required`)
+	}), ErrSparklineLocation.Error())
 
 	assert.EqualError(t, f.AddSparkline("Sheet1", &SparklineOption{
 		Location: []string{"F3"},
-	}), `parameter 'Range' is required`)
+	}), ErrSparklineRange.Error())
 
 	assert.EqualError(t, f.AddSparkline("Sheet1", &SparklineOption{
 		Location: []string{"F2", "F3"},
 		Range:    []string{"Sheet2!A3:E3"},
-	}), `must have the same number of 'Location' and 'Range' parameters`)
+	}), ErrSparkline.Error())
 
 	assert.EqualError(t, f.AddSparkline("Sheet1", &SparklineOption{
 		Location: []string{"F3"},
 		Range:    []string{"Sheet2!A3:E3"},
 		Type:     "unknown_type",
-	}), `parameter 'Type' must be 'line', 'column' or 'win_loss'`)
+	}), ErrSparklineType.Error())
 
 	assert.EqualError(t, f.AddSparkline("Sheet1", &SparklineOption{
 		Location: []string{"F3"},
 		Range:    []string{"Sheet2!A3:E3"},
 		Style:    -1,
-	}), `parameter 'Style' must betweent 0-35`)
+	}), ErrSparklineStyle.Error())
 
 	assert.EqualError(t, f.AddSparkline("Sheet1", &SparklineOption{
 		Location: []string{"F3"},
 		Range:    []string{"Sheet2!A3:E3"},
 		Style:    -1,
-	}), `parameter 'Style' must betweent 0-35`)
+	}), ErrSparklineStyle.Error())
 
-	f.Sheet["xl/worksheets/sheet1.xml"].ExtLst.Ext = `<extLst>
+	ws, ok := f.Sheet.Load("xl/worksheets/sheet1.xml")
+	assert.True(t, ok)
+	ws.(*xlsxWorksheet).ExtLst.Ext = `<extLst>
 	    <ext x14="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main" uri="{05C60535-1F16-4fd2-B633-F4F36F0B64E0}">
 	        <x14:sparklineGroups
 	            xmlns:xm="http://schemas.microsoft.com/office/excel/2006/main">
@@ -270,7 +272,7 @@ func TestAddSparkline(t *testing.T) {
 }
 
 func TestAppendSparkline(t *testing.T) {
-	// Test unsupport charset.
+	// Test unsupported charset.
 	f := NewFile()
 	ws, err := f.workSheetReader("Sheet1")
 	assert.NoError(t, err)
